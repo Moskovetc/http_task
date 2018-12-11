@@ -1,27 +1,42 @@
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 public class Main {
     private static final String PATTERN_CRFTOKEN = "\"csrfToken\":\"[^.\"]++\"";
     private static final String PATTERN_YANDEXUID = "yandexuid=\\d++";
+    private static final String ADDRESS = "ул. Карла Маркса, 246";
+    private static final String PATTERN_COORDINATES = "\"address\":\"" +
+            ADDRESS + "\",\"coordinates\":\\[[.]++\\]";
+    private static final String URL_YANDEX = "https://yandex.ru/maps/";
+    private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) {
         HTTPRequestService httpRequestService = new HTTPRequestService();
-        httpRequestService.setUrl("https://yandex.ru/maps");
-        httpRequestService.setCookie("yandexuid=2030977811544445763");
+        httpRequestService.setUrl(URL_YANDEX);
         try {
+            httpRequestService.setCookie("yandexuid=2843151081544514694");
             String response = httpRequestService.getRequest();
-            System.out.println(response);
+            logger.info(response);
             String crfToken = httpRequestService.parseByRegExp(response, PATTERN_CRFTOKEN);
             String yandexuid = httpRequestService.parseByRegExp(response, PATTERN_YANDEXUID);
-            if (null != crfToken) {
-                System.out.println(crfToken);
-            }
             if (null != yandexuid) {
-                System.out.println(yandexuid);
+                httpRequestService.setCookie(yandexuid);
+                logger.info(String.format("yandexuid = %s", yandexuid));
             }
-            httpRequestService.setUrl("https://yandex.ru/maps/api/search?text=Ижевск, карла маркса, 246&lang=ru_RU&csrfToken=" + crfToken);
-            response = httpRequestService.getRequest();
-            System.out.println(response);
+            if (null != crfToken) {
+                crfToken = crfToken.split(":\"")[1].replaceAll("\"", "");
+                logger.info(String.format("crfToken = %s", crfToken));
+                httpRequestService.setUrl(URL_YANDEX + "?text=" + URLEncoder.encode(
+                        ADDRESS, StandardCharsets.UTF_8.name()) +
+                        "&lang=ru_RU&csrfToken=" + crfToken);
+                response = httpRequestService.getRequest();
+            }
+            logger.info(response);
+            logger.info(httpRequestService.parseByRegExp(response, PATTERN_COORDINATES));
         } catch (IOException e) {
             e.printStackTrace();
         }

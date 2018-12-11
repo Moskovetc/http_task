@@ -21,7 +21,9 @@ public class HTTPRequestService {
     public String getRequest() throws IOException {
         URL url = new URL(hostURL);
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
-        con.setRequestProperty("Cookie", cookie);
+        if (null != cookie) {
+            con.setRequestProperty("Cookie", cookie);
+        }
         con.setRequestMethod("GET");
         StringBuilder result = new StringBuilder();
         BufferedReader rd = new BufferedReader(new InputStreamReader(con.getInputStream()));
