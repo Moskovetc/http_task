@@ -1,8 +1,12 @@
+import exceptions.NotSetCookieException;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,11 +22,13 @@ public class HTTPRequestService {
         this.cookie = cookie;
     }
 
-    public String getRequest() throws IOException {
+    public String getRequest() throws IOException, NotSetCookieException {
         URL url = new URL(hostURL);
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
         if (null != cookie) {
             con.setRequestProperty("Cookie", cookie);
+        } else {
+            throw new NotSetCookieException();
         }
         con.setRequestMethod("GET");
         StringBuilder result = new StringBuilder();
@@ -36,13 +42,13 @@ public class HTTPRequestService {
         return result.toString();
     }
 
-    public String parseByRegExp(String line, String regexp) {
+    public List<String> parseByRegExp(String line, String regexp) {
         Pattern pattern = Pattern.compile(regexp);
         Matcher matcher = pattern.matcher(line);
-        if (matcher.find()) {
-            return matcher.group();
-        } else {
-            return null;
+        List<String> result = new ArrayList<>();
+        while (matcher.find()) {
+            result.add(matcher.group());
         }
+        return result;
     }
 }
